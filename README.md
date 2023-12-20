@@ -19,7 +19,7 @@ This repository provides source code for the client and server apps.
 
 ## Usage
 
-The system supports the following commands:
+The client supports the following commands:
 
 - `CONNECT <port> <client name>`: Connects the client to the server on the specified port with a given name.
 - `DISCONNECT`: Disconnects the client from the server.
@@ -28,3 +28,20 @@ The system supports the following commands:
 - `UNSUBSCRIBE <topic name>`: Unsubscribes from a specific topic.
 
 ## Description
+
+### Client
+
+The client uses a command observer pattern to handle all the commands (Commands.h and Commands.cpp).
+It uses `poll` to check if there is any input and then deals with the input appropriately. If any message is received, it is printed out. 
+When DISCONNECT command is entered, the client disconnects and the app closes.
+
+### Server
+
+The server initializes by creating a socket, binding it, and starting to listen. It then enters a loop to handle client interactions.
+In each iteration, it checks for new client connections and reads data from existing clients.
+It processes client commands such as publish, subscribe, and unsubscribe.
+When a client disconnects, it is removed from the list of clients and unsubscribed from topics.
+The server continues running until there are no more clients connected.
+
+Here we have an observer design pattern in use. Class Topic (Topic.h, Topic.cpp) manages the observers (ClientObserver.h, ClientObserver.cpp) subscribed to a specific topic.
+
