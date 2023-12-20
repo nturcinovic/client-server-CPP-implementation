@@ -24,7 +24,8 @@ bool ConnectCommand::connectToServer() {
         addr.sin_family = AF_INET;
         addr.sin_port = htons(port);
 
-        if (inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) <= 0) {
+        // If both server and clients are not on the same network, change IP to servers IP
+        if (inet_pton(AF_INET, IP, &addr.sin_addr) <= 0) {
             std::cout << "Invalid address - Address not supported" << std::endl;
             return false;
         }
@@ -47,22 +48,23 @@ bool ConnectCommand::connectToServer() {
     return true;
 }
 
-bool ConnectCommand::execute() { connectToServer(); }
+bool ConnectCommand::execute() { return connectToServer() ? true : false; }
 
 
 DisconnectCommand::DisconnectCommand(int &clientfd, bool &running)
     : clientfd(clientfd), running(running){}
 
-void DisconnectCommand::disconnectFromServer() {
+bool DisconnectCommand::disconnectFromServer() {
     std::cout << "disconnecting from server" << std::endl;
     if (clientfd != -1) {
         close(clientfd);
         clientfd = -1;
     }
     running = false;
+    return true;
 }
 
-bool DisconnectCommand::execute() { disconnectFromServer(); }
+bool DisconnectCommand::execute() { return disconnectFromServer(); }
 
 
 PublishCommand::PublishCommand(int &clientfd, char *buffer)
@@ -92,7 +94,7 @@ bool PublishCommand::publishData() {
     return true;
 }
 
-bool PublishCommand::execute() { publishData(); }
+bool PublishCommand::execute() { return publishData() ? true : false; }
 
 
 SubscribeCommand::SubscribeCommand(int &clientfd, char *buffer)
@@ -120,7 +122,7 @@ bool SubscribeCommand::subscribeToTopic() {
     return true;
 }
 
-bool SubscribeCommand::execute() { subscribeToTopic(); }
+bool SubscribeCommand::execute() { return subscribeToTopic() ? true : false; }
 
 
 UnsubscribeCommand::UnsubscribeCommand(int &clientfd, char *buffer)
@@ -148,4 +150,4 @@ bool UnsubscribeCommand::unsubscribeFromTopic() {
     return true;
 }
 
-bool UnsubscribeCommand::execute() { unsubscribeFromTopic(); }
+bool UnsubscribeCommand::execute() { return unsubscribeFromTopic() ? true : false; }

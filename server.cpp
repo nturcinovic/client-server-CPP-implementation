@@ -33,7 +33,6 @@ void Server::run() {
 bool Server::initializeServer() {
     int opt = 1;
 
-    // Create socket
     serverfd = socket(AF_INET, SOCK_STREAM, 0);
     if (serverfd < 0) 
     {
@@ -41,7 +40,6 @@ bool Server::initializeServer() {
         return false;
     }
 
-    // Forcefully attaching socket to the port
     if (setsockopt(serverfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) 
     {
         perror("setsockopt");
@@ -52,14 +50,12 @@ bool Server::initializeServer() {
     addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(port);
 
-    // Bind the socket
     if (bind(serverfd, (struct sockaddr *) &addr, sizeof(addr)) < 0) 
     {
         perror("bind");
         return false;
     }
 
-    // Listen for incoming connections
     if (listen(serverfd, 5) < 0) 
     {
         perror("listen");
@@ -104,14 +100,11 @@ bool Server::pollClients() {
 
     while (1) 
     {
-        // Clear the socket set
         FD_ZERO(&readfds);
 
-        // Add master socket to set
         FD_SET(serverfd, &readfds);
         max_sd = serverfd;
 
-        // Add child sockets to set
         for (auto &client : clients) {
             sd = client.getSock();
             // If valid socket descriptor, then add to read list
@@ -199,10 +192,8 @@ bool Server::pollClients() {
                         
                     } else if (commandType == "SUBSCRIBE") {
                         client.subscribe(topicName);
-
                         topics.push_back(tempTopic);
 
-                        // Find the topic in the topics vector
                         auto it = std::find_if(topics.begin(), topics.end(), [topicName](const Topic& topic) {
                             return topic.getName() == topicName;
                         });
@@ -214,7 +205,7 @@ bool Server::pollClients() {
 
                     } else if (commandType == "UNSUBSCRIBE") {
                         client.unsubscribe(topicName);
-                        // Find the topic in the topics vector
+
                         auto it = std::find_if(topics.begin(), topics.end(), [topicName](const Topic& topic) {
                             return topic.getName() == topicName;
                         });
@@ -222,6 +213,7 @@ bool Server::pollClients() {
                         // If the topic is found, remove the client as an observer
                         if (it != topics.end()) {
                             it->removeObserver(&client);
+                            topics.erase(it);
                         }
                     }
                 }

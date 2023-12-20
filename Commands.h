@@ -3,17 +3,16 @@
 #include <iostream>
 
 #define BUFFER_SIZE     1024
+#define IP              "127.0.0.1"
 
 class Client;
 
-// Command interface
 class Command {
 public:
     virtual ~Command() = default;
 	virtual bool execute() = 0;
 };
 
-// Concrete Command: Connect
 class ConnectCommand : public Command {
 private:
     int &clientfd;
@@ -27,19 +26,17 @@ public:
     bool execute() override;
 };
 
-// Concrete Command: Disconnect
 class DisconnectCommand : public Command {
 private:
 	int &clientfd;
     bool &running;
 
-    void disconnectFromServer();
+    bool disconnectFromServer();
 public:
     DisconnectCommand(int &clientfd, bool &running);
 	bool execute() override;
 };
 
-// Concrete Command: Publish
 class PublishCommand : public Command {
 private:
     int &clientfd;
@@ -51,7 +48,6 @@ public:
 	bool execute() override;
 };
 
-// Concrete Command: Subscribe
 class SubscribeCommand : public Command {
 private:
     int &clientfd;
@@ -63,7 +59,6 @@ public:
 	bool execute() override;
 };
 
-// Concrete Command: Unsubscribe
 class UnsubscribeCommand : public Command {
 private:
     int &clientfd;

@@ -4,7 +4,6 @@
 #include <vector>
 #include "Message.h"
 #include "ClientObserver.h"
-#include "TopicObserver.h"
 
 class Topic {
 private:
@@ -18,6 +17,5 @@ public:
     void addObserver(ClientObserver* observer);
     void removeObserver(ClientObserver* observer);
     void publishMessage(const Message& message);
-    std::string getName() const;
-    void print_observers();    
+    std::string getName() const; 
 };

@@ -13,7 +13,6 @@
 Client::Client() : clientfd(-1), port(0), running(true) {
     memset(buffer, 0, BUFFER_SIZE);
 
-    // Initialize commands
     commands.push_back(new ConnectCommand(clientfd, port, clientName, buffer));
     commands.push_back(new DisconnectCommand(clientfd, running));
     commands.push_back(new PublishCommand(clientfd, buffer));
@@ -35,7 +34,7 @@ void Client::run() {
         return;
     }
 
-    /* get socket's flags */
+    // get socket's flags 
     int flags = fcntl(clientfd, F_GETFL, 0);   
     if (flags < 0) 
     {
@@ -43,7 +42,7 @@ void Client::run() {
         return;
     } 
 
-    /* Apply the new flags to the socket */
+    // Apply the new flags to the socket 
     if (fcntl(clientfd, F_SETFL, flags | O_NONBLOCK) < 0) 
     {
         perror("fcntl set");
@@ -115,7 +114,6 @@ bool Client::commandMatches(Command *command, const std::string &cmd) {
     // Convert commandType to uppercase for case-insensitive comparison
     std::transform(commandType.begin(), commandType.end(), commandType.begin(), ::toupper);
 
-    // Compare with the known command types
     if (commandType == "CONNECT" && dynamic_cast<ConnectCommand *>(command)) {
         return true;
     } else if (commandType == "DISCONNECT" && dynamic_cast<DisconnectCommand *>(command)) {

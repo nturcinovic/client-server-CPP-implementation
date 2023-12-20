@@ -20,15 +20,13 @@ private:
     socklen_t addrlen;
     char buffer[BUFFER_SIZE];
 
-public:
-    Server(int serverPort);
-    ~Server();
-    void run();
-
-private:
     bool initializeServer();
     void init_client(ClientObserver *client, int clientSockFd, std::string buffer);
     void close_client(ClientObserver &client);
     bool pollClients();
     bool topicNameMatches(const Topic& topic, const std::string& name) const;
+public:
+    Server(int serverPort);
+    ~Server();
+    void run();
 };
