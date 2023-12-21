@@ -8,7 +8,7 @@
 Server::Server(int serverPort) : serverfd(-1), port(serverPort) {
     memset(&addr, 0, sizeof(addr));
     addrlen = sizeof(addr);
-    newMessage = {};
+    //newMessage("", "");
     clients.reserve(MAX_CLIENTS);
     topics.reserve(MAX_TOPICS);
 }
