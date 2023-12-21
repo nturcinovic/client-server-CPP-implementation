@@ -8,6 +8,9 @@
 Server::Server(int serverPort) : serverfd(-1), port(serverPort) {
     memset(&addr, 0, sizeof(addr));
     addrlen = sizeof(addr);
+    newMessage = {};
+    clients.reserve(MAX_CLIENTS);
+    topics.reserve(MAX_TOPICS);
 }
 
 Server::~Server() {
@@ -65,16 +68,17 @@ bool Server::initializeServer() {
     return true;
 }
 
-void Server::init_client(ClientObserver *client, int clientSockFd, std::string buffer) {
-    client->sock = clientSockFd;
-    client->port = ntohs(addr.sin_port);
-    client->ip = inet_ntoa(addr.sin_addr);
-    memset(client->buffer, 0, sizeof(client->buffer)); 
-    client->name = buffer;
-    clients.push_back(*client);
+void Server::initClient(int clientSockFd, std::string buffer) {
+    ClientObserver tmpClient; 
+    tmpClient.sock = clientSockFd;
+    tmpClient.port = ntohs(addr.sin_port);
+    tmpClient.ip = inet_ntoa(addr.sin_addr);
+    memset(tmpClient.buffer, 0, sizeof(tmpClient.buffer)); 
+    tmpClient.name = buffer;
+    clients.push_back(tmpClient);
 }
 
-void Server::close_client(ClientObserver &client) {
+void Server::closeClient(ClientObserver &client) {
     auto it = std::find_if(clients.begin(), clients.end(), [&client](const ClientObserver& c) {
         return &c == &client;
     });
@@ -82,8 +86,8 @@ void Server::close_client(ClientObserver &client) {
     if (it != clients.end()) {
         // Unsubscribe the client from all topics
         for (auto& topic : topics) {
-            topic.removeObserver(&client);
             client.unsubscribe(topic.getName());
+            topic.removeObserver(&client);
         }
 
         // Remove the client from the list of clients
@@ -96,7 +100,6 @@ bool Server::pollClients() {
     int activity, valread, sd, max_sd;
     int IsThereClients = 0;
     std::string topicName, topicData;
-    ClientObserver tmpClient;
 
     while (1) 
     {
@@ -141,8 +144,7 @@ bool Server::pollClients() {
 
             memset(buffer, 0, sizeof(buffer));
             valread = read(clientSockFd, buffer, sizeof(buffer));
-        
-            init_client(&tmpClient, clientSockFd, buffer);
+            initClient(clientSockFd, buffer);
 
             std::cout << "New connection, socket fd is [" << clientSockFd <<"], ip is: ["<< inet_ntoa(addr.sin_addr)
                     << "], port: [" << ntohs(addr.sin_port) << "], name: [" << buffer << "]" << std::endl;
@@ -160,7 +162,7 @@ bool Server::pollClients() {
                 if (valread == 0) 
                 {
                     // Client disconnected
-                    close_client(client);
+                    closeClient(client);
                     sd = 0;
                     IsThereClients--;
 
@@ -178,43 +180,24 @@ bool Server::pollClients() {
                     // Convert commandType to uppercase for case-insensitive comparison
                     std::transform(commandType.begin(), commandType.end(), commandType.begin(), ::toupper);
 
-                    Message newMessage{topicName, topicData};
+                    newMessage.topic = topicName;
+                    newMessage.data = topicData;
                     Topic tempTopic(newMessage);
 
                     // Compare with the known command types
                     if (commandType == "PUBLISH") {
                         for (auto &topic : topics) {
-                            if (topicNameMatches(topic, newMessage.topic)) {
+                            if (topic.getName() == newMessage.topic) {
                                 topic.publishMessage(newMessage);
-                                std::cout << "Client [" << client.name << "] published data [" << topicData << "] to topic [" << topicName <<"]" << std::endl; 
+                                std::cout << "Client [" << client.name << "] published data [" << newMessage.data  << "] to topic [" << newMessage.topic  <<"]" << std::endl; 
                             }
                         }
-                        
+
                     } else if (commandType == "SUBSCRIBE") {
-                        client.subscribe(topicName);
-                        topics.push_back(tempTopic);
-
-                        auto it = std::find_if(topics.begin(), topics.end(), [topicName](const Topic& topic) {
-                            return topic.getName() == topicName;
-                        });
-
-                        // If the topic is found, add the client as an observer
-                        if (it != topics.end()) {
-                            it->addObserver(&client);
-                        }
+                        addTopic(tempTopic, client);
 
                     } else if (commandType == "UNSUBSCRIBE") {
-                        client.unsubscribe(topicName);
-
-                        auto it = std::find_if(topics.begin(), topics.end(), [topicName](const Topic& topic) {
-                            return topic.getName() == topicName;
-                        });
-
-                        // If the topic is found, remove the client as an observer
-                        if (it != topics.end()) {
-                            it->removeObserver(&client);
-                            topics.erase(it);
-                        }
+                        removeTopic(newMessage.topic, client);
                     }
                 }
             }
@@ -223,16 +206,41 @@ bool Server::pollClients() {
         if(IsThereClients == 0)
         {
             std::cout << "No more clients connected, shuting down the server!" << std::endl;
+            topics.clear();
             break;
         }
     }
+
     return false;
 }
 
-bool Server::topicNameMatches(const Topic& topic, const std::string& name) const {
-    return topic.getName() == name;
+void Server::addTopic(Topic& topicTmp, ClientObserver& client) {
+    client.subscribe(topicTmp.getName());
+
+    auto it = std::find_if(topics.begin(), topics.end(), [topicTmp](const Topic& topic) {
+        return topic.getName() == topicTmp.getName();
+    });
+
+    if (it != topics.end()) {
+        it->addObserver(&client);
+    } else {
+        topicTmp.addObserver(&client);
+        topics.push_back(topicTmp);
+    }
 }
 
+void Server::removeTopic(const std::string& topicName, ClientObserver& client) {
+    client.unsubscribe(topicName);
+
+    auto it = std::find_if(topics.begin(), topics.end(), [topicName](const Topic& topic) {
+        return topic.getName() == topicName;
+    });
+
+    // If the topic is found, remove the client as an observer
+    if (it != topics.end()) {
+        it->removeObserver(&client);
+    }
+}
 
 int main(int argc, char* argv[]) {
     int serverPort = (argc > 1) ? std::stoi(argv[1]) : DEFAULT_PORT;

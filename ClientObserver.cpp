@@ -15,12 +15,13 @@ ClientObserver::ClientObserver() : sock(-1), port(-1) {
 }
 
 void ClientObserver::notify(const Message& message) {
-    if(sock > 0 && is_subscribed(message.topic)) {
+    auto it = is_subscribed(message.topic);
+    if(sock > 0 && it != topicsSubscribed.end()) {
         memset(buffer, 0, sizeof(buffer));
         strcpy(buffer, message.topic.c_str());
         buffer[strlen(message.topic.c_str())] = DELIM_CHAR; 
         strcpy(&buffer[strlen(message.topic.c_str()) + 1], message.data.c_str());
-        if(send(sock, buffer, strlen(buffer), 0) != strlen(buffer))   
+        if(send(sock, buffer, strlen(buffer), 0) != static_cast<ssize_t>(strlen(buffer)))   
         {   
             perror("publish send");   
         }
@@ -28,25 +29,18 @@ void ClientObserver::notify(const Message& message) {
     }
 }
 
-int ClientObserver::getSock() {
+int ClientObserver::getSock() const {
     return sock;
 }
 
-bool ClientObserver::is_subscribed(std::string topicName)
+std::set<std::string>::iterator ClientObserver::is_subscribed(std::string topicName)
 {
-    for(auto topic : topicsSubscribed)
-    {
-        if(topic == topicName)
-        {
-            return true;
-        }
-    }
-    return false;
+    return std::find(topicsSubscribed.begin(), topicsSubscribed.end(), topicName);
 }
 
 void ClientObserver::subscribe(std::string topicName) {
-    auto it = std::find(topicsSubscribed.begin(), topicsSubscribed.end(), topicName);
-    if (it != topicsSubscribed.end()) {
+    auto it = is_subscribed(topicName);
+    if(it != topicsSubscribed.end()) {
         std::cout << "client [" << name << "] already subscribed to topic [" << topicName << "]" << std::endl;
     } else {
         topicsSubscribed.insert(topicName);
@@ -55,7 +49,7 @@ void ClientObserver::subscribe(std::string topicName) {
 }
 
 void ClientObserver::unsubscribe(std::string topicName) {
-    auto it = std::find(topicsSubscribed.begin(), topicsSubscribed.end(), topicName);
+    auto it = is_subscribed(topicName);
     if (it != topicsSubscribed.end()) {
         topicsSubscribed.erase(it);
         std::cout << "Client [" << name << "] unsubscribed from topic [" << topicName << "]\n";

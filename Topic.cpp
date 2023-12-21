@@ -1,7 +1,7 @@
 #include "Topic.h"
 #include <algorithm>
 
-Topic::Topic(const Message &newMessage) : name(newMessage.topic), data(newMessage.data) {}
+Topic::Topic(const Message &newMessage) : msg(newMessage) {}
 
 void Topic::addObserver(ClientObserver* observer) {
     observers.push_back(observer);
@@ -19,11 +19,13 @@ void Topic::publishMessage(const Message& message) {
 }
 
 std::string Topic::getName() const {
-    return name;
+    return msg.topic;
 }
 
 void Topic::notifyObservers(const Message& message) {
-    for (auto observer : observers) {
-        observer->notify(message);
+    for (auto &observer : observers) { 
+        if (observer) {
+            observer->notify(message);
+        }
     }
 }

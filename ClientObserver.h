@@ -25,9 +25,9 @@ public:
 
     ClientObserver(int socket, int clientPort, const std::string& clientIp, const std::string& clientName);
     ClientObserver();
-    void notify(const Message& message);
-    int getSock();
-    bool is_subscribed(std::string topicName);
+    void notify(const Message& message) override;
+    int getSock() const;
+    std::set<std::string>::iterator is_subscribed(std::string topicName);
     void subscribe(std::string topicName);
     void unsubscribe(std::string topicName);
 };

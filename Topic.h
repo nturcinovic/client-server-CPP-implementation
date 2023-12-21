@@ -7,8 +7,7 @@
 
 class Topic {
 private:
-    std::string name;
-    std::string data;
+    Message msg;
     std::vector<ClientObserver*> observers;
 
     void notifyObservers(const Message& message);

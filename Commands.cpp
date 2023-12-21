@@ -36,7 +36,7 @@ bool ConnectCommand::connectToServer() {
             return false;
         }
         strcpy(buffer, clientName.c_str());
-        if (send(clientfd, buffer, strlen(buffer), 0) != strlen(buffer)) {
+        if (send(clientfd, buffer, strlen(buffer), 0) != static_cast<ssize_t>(strlen(buffer))) {
             perror("send");
             return false;
         }
@@ -83,7 +83,7 @@ bool PublishCommand::publishData() {
         buffer[tmp.length() + 1 + topicName.length()] = ' ';
         strcpy(&buffer[tmp.length() + 1 + topicName.length() + 1], topicData.c_str());
 
-        if (send(clientfd, buffer, strlen(buffer), 0) != strlen(buffer)) {
+        if (send(clientfd, buffer, strlen(buffer), 0) != static_cast<ssize_t>(strlen(buffer))) {
             perror("send");
             return false;
         }
@@ -111,7 +111,7 @@ bool SubscribeCommand::subscribeToTopic() {
         buffer[tmp.length()] = ' ';
         strcpy(&buffer[tmp.length() + 1], topicName.c_str());
 
-        if (send(clientfd, buffer, strlen(buffer), 0) != strlen(buffer)) {
+        if (send(clientfd, buffer, strlen(buffer), 0) != static_cast<ssize_t>(strlen(buffer))) {
             perror("send");
             return false;
         }
@@ -139,7 +139,7 @@ bool UnsubscribeCommand::unsubscribeFromTopic() {
         buffer[tmp.length()] = ' ';
         strcpy(&buffer[tmp.length() + 1], topicName.c_str());
 
-        if (send(clientfd, buffer, strlen(buffer), 0) != strlen(buffer)) {
+        if (send(clientfd, buffer, strlen(buffer), 0) != static_cast<ssize_t>(strlen(buffer))) {
             perror("send");
             return false;
         }
