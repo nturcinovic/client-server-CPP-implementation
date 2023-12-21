@@ -1,6 +1,6 @@
 # client/server apps
 
-This repository provides source code for the client and server apps.
+This repository provides source code for the client and server apps. All you need is a Linux machine. 
 
 ## Build
 
@@ -34,6 +34,8 @@ The client supports the following commands:
 The client uses a command observer pattern to handle all the commands (Commands.h and Commands.cpp).
 It uses `poll` to check if there is any input and then deals with the input appropriately. If any message is received, it is printed out. 
 When DISCONNECT command is entered, the client disconnects and the app closes.
+
+**Important:** If clients are not on the same network as the server, change IP in Commands.h to servers ip. 
 
 ### Server
 
