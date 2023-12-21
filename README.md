@@ -27,7 +27,18 @@ The client supports the following commands:
 - `SUBSCRIBE <topic name>`: Subscribes to a specific topic.
 - `UNSUBSCRIBE <topic name>`: Unsubscribes from a specific topic.
 
+Example of running a client:
+- `./client`
+- `connect 8080 client_name`
+- `subscribe /topic`
+- `publish /topic some_data`
+- `unsubscribe /topic`
+- `disconnect`
+
+
 ## Description
+
+Both client and server apps print various messages of what is going on at the time.
 
 ### Client
 
